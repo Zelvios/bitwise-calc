@@ -1,4 +1,3 @@
-use color_eyre::owo_colors::OwoColorize;
 use color_eyre::Result;
 use ratatui::prelude::{Style, Stylize};
 use ratatui::{
@@ -221,9 +220,18 @@ impl App {
         let (msg, style) = match self.input_mode {
             InputMode::Normal => (
                 vec![
-                    Line::from(Span::styled(format!("'{}' to exit", "q"), Style::default().fg(Color::Yellow))),
-                    Line::from(Span::styled(format!("'{}' to start editing", "e"), Style::default().fg(Color::Yellow))),
-                    Line::from(Span::styled(format!("'{}' to clear messages", "c"), Style::default().fg(Color::Yellow)))
+                    Line::from(vec![
+                        Span::styled("'q'", Style::default().fg(Color::Red)),
+                        Span::raw(" to exit"),
+                    ]),
+                    Line::from(vec![
+                        Span::styled("'e'", Style::default().fg(Color::Yellow)),
+                        Span::raw(" to start editing"),
+                    ]),
+                    Line::from(vec![
+                        Span::styled("'c'", Style::default().fg(Color::LightBlue)),
+                        Span::raw(" to clear messages"),
+                    ]),
                 ],
                 RatatuiStyle::default().add_modifier(Modifier::RAPID_BLINK),
             ),
