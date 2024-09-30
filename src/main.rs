@@ -207,7 +207,7 @@ impl App {
             Constraint::Length(5), // Big text / title
             Constraint::Length(4), // Info box area
             Constraint::Length(3), // Input area
-            Constraint::Min(1), // Messages area
+            Constraint::Min(1),    // Messages area
         ]);
 
         // Get the areas based on the vertical layout
@@ -248,9 +248,18 @@ impl App {
                     ))]
                 } else {
                     vec![
-                        Line::from(Span::styled("Please enter your operation", Style::default().fg(Color::Yellow))),
-                        Line::from(Span::styled("➣ '+' or 'plus'", Style::default().fg(Color::Green))),
-                        Line::from(Span::styled("➣ '-' or 'minus'", Style::default().fg(Color::Green))),
+                        Line::from(Span::styled(
+                            "Please enter your operation",
+                            Style::default().fg(Color::Yellow),
+                        )),
+                        Line::from(Span::styled(
+                            "➣ '+' or 'plus'",
+                            Style::default().fg(Color::Green),
+                        )),
+                        Line::from(Span::styled(
+                            "➣ '-' or 'minus'",
+                            Style::default().fg(Color::Green),
+                        )),
                     ]
                 };
 
@@ -262,7 +271,6 @@ impl App {
         let text = Text::from(msg);
         let help_message = Paragraph::new(text).style(style);
         frame.render_widget(help_message, help_area);
-
 
         // Input area
         let input = Paragraph::new(self.input.as_str())
@@ -287,14 +295,13 @@ impl App {
             .messages
             .iter()
             .enumerate()
+            .rev()
             .map(|(i, m)| {
                 let content = if m.contains('=') {
                     Span::styled(format!("{i}: {m}"), Style::default().fg(Color::Green))
                 } else if m.contains("Invalid") {
-
                     Span::styled(format!("{i}: {m}"), Style::default().fg(Color::Red))
-                }
-                else {
+                } else {
                     Span::styled(format!("{i}: {m}"), Style::default().fg(Color::White))
                 };
                 ListItem::new(Line::from(content))
