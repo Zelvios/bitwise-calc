@@ -28,6 +28,8 @@ struct App {
     messages: Vec<String>,
 }
 
+// Normal: navigation.
+// Editing: inputting data.
 enum InputMode {
     Normal,
     Editing,
@@ -44,6 +46,17 @@ impl App {
             messages: Vec::new(),
             character_index: 0,
         }
+    }
+    const fn add(first: i32, second: i32) -> i32 {
+        first + second
+    }
+
+    const fn subtract(first: i32, second: i32) -> i32 {
+        first - second
+    }
+
+    const fn div(first: i32, second: i32) -> i32 {
+        first / second
     }
 
     fn move_cursor_left(&mut self) {
@@ -91,64 +104,51 @@ impl App {
         self.character_index = 0;
     }
 
-    const fn add(first: i32, second: i32) -> i32 {
-        first + second
-    }
-
-    const fn subtract(first: i32, second: i32) -> i32 {
-        first - second
-    }
-
     #[allow(clippy::uninlined_format_args)]
     fn submit_message(&mut self) {
         if self.first_number.is_none() {
-            // Parse first number
             if let Ok(num) = self.input.trim().parse::<i32>() {
                 self.first_number = Some(num);
                 self.messages.push(format!("First number entered: {}", num));
             } else {
-                self.messages
-                    .push("Invalid number! Please enter the first number.".into());
+                self.messages.push("Invalid input! Please enter a valid first number.".to_string());
             }
-        } else if self.second_number.is_none() {
-            // Parse second number
+        }
+        else if self.second_number.is_none() {
             if let Ok(num) = self.input.trim().parse::<i32>() {
                 self.second_number = Some(num);
-                self.messages
-                    .push(format!("Second number entered: {}", num));
+                self.messages.push(format!("Second number entered: {}", num));
             } else {
-                self.messages
-                    .push("Invalid number! Please enter the second number.".into());
+                self.messages.push("Invalid input! Please enter a valid second number.".to_string());
             }
-        } else if self.operator.is_none() {
-            // Parse operator
+        }
+        else if self.operator.is_none() {
             let trimmed_input = self.input.trim().to_lowercase();
-            if trimmed_input == "+" || trimmed_input == "plus" {
-                self.operator = Some("+".to_string());
-            } else if trimmed_input == "-" || trimmed_input == "minus" {
-                self.operator = Some("-".to_string());
-            } else {
-                self.messages
-                    .push("Invalid operator! Please enter '+' or 'plus', '-' or 'minus'.".into());
+            match trimmed_input.as_str() {
+                "+" | "plus" => self.operator = Some("+".to_string()),
+                "-" | "minus" => self.operator = Some("-".to_string()),
+                "/" | "div" => self.operator = Some("/".to_string()),
+                _ => {
+                    self.messages.push("Invalid operator! Please enter a valid operator: '+' (plus), '-' (minus), or '/' (div).".to_string());
+                },
             }
         }
 
-        if let (Some(first), Some(second), Some(operator)) =
-            (self.first_number, self.second_number, &self.operator)
-        {
+        if let (Some(first), Some(second), Some(operator)) = (self.first_number, self.second_number, &self.operator) {
             let result = match operator.as_str() {
                 "+" => Self::add(first, second),
                 "-" => Self::subtract(first, second),
-                _ => 0, // Should never happen due to earlier checks
+                "/" => Self::div(first, second),
+                _ => unreachable!(),
             };
 
-            self.messages
-                .push(format!("{} {} {} = {}", first, operator, second, result));
+            self.messages.push(format!("{} {} {} = {}", first, operator, second, result));
+            
             self.first_number = None;
             self.second_number = None;
             self.operator = None;
         }
-
+        
         self.input.clear();
         self.reset_cursor();
     }
@@ -309,5 +309,80 @@ impl App {
             .collect();
         let messages = List::new(messages).block(Block::bordered().title("Messages"));
         frame.render_widget(messages, messages_area);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_reset_cursor() {
+        let mut app = App::new();
+        app.character_index = 3;
+        app.reset_cursor();
+        assert_eq!(app.character_index, 0);
+    }
+    #[test]
+    fn test_add() {
+        assert_eq!(App::add(2, 3), 5);
+        assert_eq!(App::add(-1, 1), 0);
+    }
+    #[test]
+    fn test_subtract() {
+        assert_eq!(App::subtract(5, 3), 2);
+        assert_eq!(App::subtract(0, 1), -1);
+    }
+    #[test]
+    fn test_divide() {
+        assert_eq!(App::div(6, 3), 2);
+    }
+
+    #[test]
+    fn test_clear_messages() {
+        let mut app = App::new();
+
+        app.first_number = Some(42);
+        app.second_number = Some(7);
+        app.operator = Some("+".to_string());
+        app.messages.push("First number entered: 42".to_string());
+        app.messages.push("Second number entered: 7".to_string());
+
+        app.clear_messages();
+
+        assert!(app.first_number.is_none());
+        assert!(app.second_number.is_none());
+        assert!(app.operator.is_none());
+        assert!(app.messages.is_empty());
+    }
+
+    #[test]
+    fn test_invalid_first_number() {
+        let mut app = App::new();
+        app.input = "invalid".to_string();
+
+        app.submit_message();
+
+        assert_eq!(app.messages.len(), 1);
+        assert_eq!(
+            app.messages[0],
+            "Invalid number! Please enter the first number.".to_string()
+        );
+    }
+
+    #[test]
+    fn test_invalid_operator() {
+        let mut app = App::new();
+        app.first_number = Some(5);
+        app.second_number = Some(3);
+        app.input = "invalid".to_string();
+
+        app.submit_message();
+
+        assert_eq!(app.messages.len(), 1);
+        assert_eq!(
+            app.messages[0],
+            "Invalid operator! Please enter '+' or 'plus', '-' or 'minus', '/' or 'div'."
+                .to_string()
+        );
     }
 }
